@@ -2,438 +2,146 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>NAD VPN — управление WireGuard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NAD VPN — WireGuard Controller</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2563eb">
     <style>
-        /* ===== Глобальные переменные и сброс ===== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        :root {
-            --bg: #f8fafc;
-            --surface: #ffffff;
-            --text: #0f172a;
-            --text-secondary: #334155;
-            --border: #e2e8f0;
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --danger: #dc2626;
-            --danger-hover: #b91c1c;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --navbar-bg: #1e293b;
-            --navbar-text: #f1f5f9;
-            --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
-        }
-
-        .theme-dark {
-            --bg: #0f172a;
-            --surface: #1e293b;
-            --text: #e2e8f0;
-            --text-secondary: #94a3b8;
-            --border: #334155;
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-            --navbar-bg: #0a0f1c;
-        }
-
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            transition: background-color 0.2s, color 0.2s;
-            line-height: 1.5;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* ===== Навигация ===== */
-        .navbar {
-            background-color: var(--navbar-bg);
-            color: white;
-            padding: 0.75rem 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 20;
-            backdrop-filter: blur(8px);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .logo {
-            font-weight: 700;
-            font-size: 1.35rem;
-            letter-spacing: -0.5px;
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 0.5rem;
-            list-style: none;
-        }
-
-        .nav-link {
-            color: #cbd5e1;
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border-radius: 2rem;
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: all 0.15s;
-            cursor: pointer;
-            border: none;
-            background: transparent;
-        }
-
-        .nav-link:hover, .nav-link.active {
-            background: rgba(255,255,255,0.1);
-            color: white;
-        }
-
-        /* ===== Основной контейнер ===== */
-        .container {
-            max-width: 600px;
-            margin: 1.5rem auto;
-            padding: 0 1rem;
-            width: 100%;
-            flex: 1;
-        }
-
-        /* ===== Карточки и секции ===== */
-        .card {
-            background: var(--surface);
-            border-radius: 24px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            box-shadow: var(--card-shadow);
-            border: 1px solid var(--border);
-        }
-
-        h2 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        /* ===== Формы ===== */
-        textarea {
-            width: 100%;
-            padding: 1rem;
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            background: var(--bg);
-            color: var(--text);
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-            resize: vertical;
-            margin-bottom: 0.75rem;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 0.75rem;
-            margin: 1rem 0;
-            flex-wrap: wrap;
-        }
-
-        .input-group input {
-            flex: 1;
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--border);
-            border-radius: 40px;
-            background: var(--bg);
-            color: var(--text);
-            font-size: 0.95rem;
-        }
-
-        button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: background 0.15s, opacity 0.15s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-
-        button:hover {
-            background: var(--primary-hover);
-        }
-
-        button.danger {
-            background: var(--danger);
-        }
-        button.danger:hover {
-            background: var(--danger-hover);
-        }
-
-        button.small {
-            padding: 0.4rem 1rem;
-            font-size: 0.8rem;
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
-        /* ===== Список конфигураций ===== */
-        .config-list {
-            list-style: none;
-            margin-top: 1rem;
-        }
-
-        .config-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem 1rem;
-            background: var(--bg);
-            border-radius: 16px;
-            margin-bottom: 0.5rem;
-            border: 1px solid var(--border);
-        }
-
-        /* ===== Дашборд ===== */
-        .status-card {
-            background: var(--bg);
-            padding: 1.75rem;
-            border-radius: 24px;
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin: 1rem 0;
-            border: 1px solid var(--border);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin: 1.5rem 0;
-        }
-
-        .stat {
-            background: var(--bg);
-            padding: 1.25rem;
-            border-radius: 20px;
-            text-align: center;
-            border: 1px solid var(--border);
-        }
-
-        .stat .label {
-            display: block;
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.35rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .stat .value {
-            font-size: 1.35rem;
-            font-weight: 700;
-        }
-
-        .peer-list {
-            list-style: none;
-            margin-top: 1rem;
-        }
-        .peer-item {
-            background: var(--bg);
-            padding: 1rem;
-            border-radius: 16px;
-            margin-bottom: 0.75rem;
-            border: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            gap: 0.35rem;
-        }
-        .peer-pubkey {
-            font-family: monospace;
-            font-size: 0.8rem;
-            word-break: break-all;
-            color: var(--primary);
-        }
-
-        /* ===== Настройки ===== */
-        .setting-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 0;
-            border-bottom: 1px solid var(--border);
-        }
-        .setting-item:last-child {
-            border-bottom: none;
-        }
-
-        /* ===== Утилиты ===== */
-        .hidden {
-            display: none !important;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .mt-2 {
-            margin-top: 1rem;
-        }
-
-        .alert {
-            padding: 1rem;
-            border-radius: 12px;
-            background: #fee2e2;
-            color: #b91c1c;
-            margin-top: 1rem;
-        }
-        .theme-dark .alert {
-            background: #451a1a;
-            color: #fecaca;
-        }
-        .alert.success {
-            background: #dcfce7;
-            color: #166534;
-        }
-        .theme-dark .alert.success {
-            background: #14532d;
-            color: #bbf7d0;
-        }
-
-        /* ===== Адаптация для мобильных ===== */
-        @media (max-width: 480px) {
-            .navbar { padding: 0.5rem 0.75rem; }
-            .nav-link { padding: 0.4rem 0.75rem; }
-            .container { padding: 0 0.75rem; }
-            h2 { font-size: 1.35rem; }
-        }
+        /* ===== Стили: минимум, но всё необходимое ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+        body { background: #f8fafc; color: #0f172a; transition: 0.2s; }
+        body.dark { background: #0f172a; color: #e2e8f0; }
+        .navbar { background: #1e293b; color: white; padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; }
+        .nav-links { display: flex; gap: 0.5rem; list-style: none; }
+        .nav-link { color: #cbd5e1; text-decoration: none; padding: 0.5rem 1rem; border-radius: 2rem; cursor: pointer; background: none; border: none; font-size: 0.9rem; }
+        .nav-link.active { background: rgba(255,255,255,0.1); color: white; }
+        .container { max-width: 600px; margin: 1.5rem auto; padding: 0 1rem; }
+        .card { background: white; border-radius: 24px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; }
+        body.dark .card { background: #1e293b; border-color: #334155; }
+        h2 { font-size: 1.5rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        textarea { width: 100%; padding: 1rem; border: 1px solid #cbd5e1; border-radius: 16px; font-family: monospace; resize: vertical; background: white; color: black; font-size: 0.9rem; }
+        body.dark textarea { background: #0f172a; color: #e2e8f0; border-color: #475569; }
+        input { padding: 0.75rem 1rem; border: 1px solid #cbd5e1; border-radius: 40px; font-size: 0.95rem; background: white; color: black; }
+        body.dark input { background: #0f172a; color: white; border-color: #475569; }
+        button { background: #2563eb; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 40px; font-weight: 600; cursor: pointer; transition: 0.1s; }
+        button:hover { background: #1d4ed8; }
+        button.danger { background: #dc2626; }
+        button.danger:hover { background: #b91c1c; }
+        button.small { padding: 0.4rem 1rem; font-size: 0.8rem; }
+        .status-card { background: #f1f5f9; padding: 1.5rem; border-radius: 20px; text-align: center; font-size: 1.5rem; font-weight: bold; margin: 1rem 0; }
+        body.dark .status-card { background: #0f172a; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+        .stat { background: #f8fafc; padding: 1rem; border-radius: 16px; text-align: center; }
+        body.dark .stat { background: #0f172a; }
+        .hidden { display: none !important; }
+        .alert { padding: 1rem; border-radius: 12px; margin-top: 1rem; background: #fee2e2; color: #b91c1c; }
+        .alert.success { background: #dcfce7; color: #166534; }
+        .config-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background: #f1f5f9; border-radius: 12px; margin-bottom: 0.5rem; }
+        body.dark .config-item { background: #0f172a; }
+        .peer-item { background: #f1f5f9; padding: 1rem; border-radius: 16px; margin-bottom: 0.75rem; }
+        body.dark .peer-item { background: #0f172a; }
     </style>
 </head>
-<body class="theme-light">
-    <!-- Навигация -->
+<body>
+    <!-- НАВИГАЦИЯ -->
     <nav class="navbar">
-        <div class="logo">🔐 NAD</div>
+        <div class="logo">🔐 NAD VPN</div>
         <ul class="nav-links">
-            <li><button class="nav-link" data-page="home">Главная</button></li>
+            <li><button class="nav-link active" data-page="home">Главная</button></li>
             <li><button class="nav-link" data-page="dashboard">Дашборд</button></li>
             <li><button class="nav-link" data-page="settings">Настройки</button></li>
             <li><button class="nav-link" data-page="about">О нас</button></li>
         </ul>
     </nav>
 
-    <!-- Контейнер для страниц -->
     <main class="container">
-        <!-- Страница: Главная (ввод ключа) -->
-        <div id="page-home" class="page">
+        <!-- ========== СТРАНИЦА: ГЛАВНАЯ ========== -->
+        <div id="page-home">
             <div class="card">
                 <h2>🔑 Подключение</h2>
-                <textarea id="configInput" placeholder="Вставьте конфигурацию WireGuard (секция [Interface] и [Peer])" rows="8"></textarea>
-                <div class="input-group">
-                    <input type="text" id="configName" placeholder="Название (например, Дом)">
-                    <button id="connectBtn" class="primary">Подключиться</button>
+                <textarea id="configInput" placeholder="Вставьте конфигурацию WireGuard (секция [Interface] и [Peer])" rows="6"></textarea>
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;">
+                    <input type="text" id="configName" placeholder="Название (например, Дом)" style="flex: 1;">
+                    <button id="connectBtn">Подключиться</button>
                 </div>
-                <div id="homeStatus" class="alert hidden"></div>
+                <div id="homeAlert" class="alert hidden"></div>
             </div>
-
             <div class="card">
                 <h3>📁 Сохранённые конфигурации</h3>
-                <ul id="savedConfigsList" class="config-list">
-                    <!-- JS заполнит -->
-                </ul>
-                <p id="noConfigsMsg" class="text-center text-secondary" style="color: var(--text-secondary);">Нет сохранённых конфигураций</p>
+                <ul id="savedList" style="list-style: none;"></ul>
+                <p id="noConfigs" style="color: #64748b; text-align: center; margin-top: 1rem;">Нет сохранённых конфигураций</p>
             </div>
         </div>
 
-        <!-- Страница: Дашборд -->
-        <div id="page-dashboard" class="page hidden">
+        <!-- ========== СТРАНИЦА: ДАШБОРД ========== -->
+        <div id="page-dashboard" class="hidden">
             <div class="card">
                 <h2>📊 Состояние VPN</h2>
                 <div id="vpnStatus" class="status-card">⏳ Загрузка...</div>
                 <div class="stats-grid">
                     <div class="stat">
-                        <span class="label">⬇️ Получено</span>
-                        <span id="rxValue" class="value">0 B</span>
+                        <span style="display: block; font-size: 0.8rem; color: #64748b;">⬇️ Получено</span>
+                        <span id="rxValue" style="font-size: 1.5rem; font-weight: 700;">0 B</span>
                     </div>
                     <div class="stat">
-                        <span class="label">⬆️ Отправлено</span>
-                        <span id="txValue" class="value">0 B</span>
+                        <span style="display: block; font-size: 0.8rem; color: #64748b;">⬆️ Отправлено</span>
+                        <span id="txValue" style="font-size: 1.5rem; font-weight: 700;">0 B</span>
                     </div>
                 </div>
-                <button id="disconnectBtn" class="danger" disabled>Отключиться</button>
+                <button id="disconnectBtn" class="danger" style="width: 100%;" disabled>Отключиться</button>
             </div>
             <div class="card">
                 <h3>🔄 Активные пиры</h3>
-                <ul id="peersList" class="peer-list">
-                    <li class="text-center" style="color: var(--text-secondary);">Нет данных</li>
-                </ul>
+                <ul id="peersList" style="list-style: none;"></ul>
             </div>
         </div>
 
-        <!-- Страница: Настройки -->
-        <div id="page-settings" class="page hidden">
+        <!-- ========== СТРАНИЦА: НАСТРОЙКИ ========== -->
+        <div id="page-settings" class="hidden">
             <div class="card">
                 <h2>⚙️ Настройки</h2>
-                <div class="setting-item">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid #e2e8f0;">
                     <span>🌙 Тёмная тема</span>
                     <button id="themeToggle" class="small">Включить</button>
                 </div>
-                <div class="setting-item">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid #e2e8f0;">
                     <span>🧹 Очистить все конфигурации</span>
                     <button id="clearConfigsBtn" class="small danger">Очистить</button>
                 </div>
-                <div class="setting-item">
-                    <span>🔗 Адрес API</span>
-                    <span id="apiEndpointDisplay" style="font-family: monospace;">https://ваш-сервер.ru</span>
+                <div style="padding: 1rem 0;">
+                    <span>🔗 Адрес API: </span>
+                    <span id="apiEndpoint" style="font-family: monospace; background: #f1f5f9; padding: 0.2rem 0.5rem; border-radius: 8px;"></span>
                 </div>
             </div>
         </div>
 
-        <!-- Страница: О нас -->
-        <div id="page-about" class="page hidden">
+        <!-- ========== СТРАНИЦА: О НАС ========== -->
+        <div id="page-about" class="hidden">
             <div class="card">
                 <h2>ℹ️ О приложении</h2>
-                <p style="margin-bottom: 1rem;"><strong>NAD VPN</strong> — Native Application in Device.</p>
-                <p>Управляйте WireGuard сервером прямо с телефона. Сохраняйте конфигурации, смотрите статистику трафика.</p>
-                <p style="margin-top: 1.5rem;">Версия: 2.0.0 (SPA)</p>
-                <p>Разработано с ❤️ для GitHub</p>
+                <p style="margin-bottom: 0.5rem;"><strong>NAD VPN</strong> — Native Application in Device.</p>
+                <p style="margin-bottom: 0.5rem;">Управляйте WireGuard сервером прямо с телефона. Сохраняйте конфигурации, смотрите статистику трафика.</p>
+                <p>Версия: 2.0.1 (SPA + PWA)</p>
+                <p style="margin-top: 1rem;">Разработано с ❤️ для GitHub</p>
             </div>
         </div>
     </main>
 
     <script>
         // ============================================
-        // NAD VPN — SPA с единым HTML
+        // NAD VPN — ЕДИНЫЙ SPA-КОД
         // ============================================
 
-        // ---------- Конфигурация API ----------
-        const API_BASE = 'https://ваш-сервер.ru'; // ЗАМЕНИТЕ НА ВАШ ДОМЕН
+        // ========== ВАШ РЕАЛЬНЫЙ ДОМЕН ==========
+        const API_BASE = 'https://aramfermicky.github.io/nad-vpn/';   
+        
+        // =========================================
 
         // ---------- Состояние приложения ----------
         let currentTheme = localStorage.getItem('theme') || 'light';
-        let savedConfigs = {};
+        let savedConfigs = JSON.parse(localStorage.getItem('nad_configs') || '{}');
 
-        // ---------- DOM-элементы (кэшируем) ----------
+        // ---------- DOM-элементы ----------
         const pages = {
             home: document.getElementById('page-home'),
             dashboard: document.getElementById('page-dashboard'),
@@ -444,9 +152,9 @@
         const configInput = document.getElementById('configInput');
         const configName = document.getElementById('configName');
         const connectBtn = document.getElementById('connectBtn');
-        const homeStatus = document.getElementById('homeStatus');
-        const savedList = document.getElementById('savedConfigsList');
-        const noConfigsMsg = document.getElementById('noConfigsMsg');
+        const homeAlert = document.getElementById('homeAlert');
+        const savedList = document.getElementById('savedList');
+        const noConfigs = document.getElementById('noConfigs');
         const vpnStatus = document.getElementById('vpnStatus');
         const disconnectBtn = document.getElementById('disconnectBtn');
         const rxValue = document.getElementById('rxValue');
@@ -454,139 +162,202 @@
         const peersList = document.getElementById('peersList');
         const themeToggle = document.getElementById('themeToggle');
         const clearConfigsBtn = document.getElementById('clearConfigsBtn');
-        const apiEndpointDisplay = document.getElementById('apiEndpointDisplay');
+        const apiEndpoint = document.getElementById('apiEndpoint');
 
         // ---------- Инициализация ----------
         function init() {
-            loadSavedConfigs();
-            renderSavedConfigs();
             applyTheme(currentTheme);
+            renderSavedConfigs();
             setupEventListeners();
-            showPage('home'); // Стартовая страница
-            if (apiEndpointDisplay) apiEndpointDisplay.textContent = API_BASE;
+            showPage('home');
+            apiEndpoint.textContent = API_BASE;
         }
 
-        // ---------- Навигация (SPA) ----------
+        // ---------- Навигация ----------
         function showPage(pageId) {
-            // Скрыть все страницы
             Object.values(pages).forEach(p => p.classList.add('hidden'));
-            // Показать нужную
             if (pages[pageId]) pages[pageId].classList.remove('hidden');
-            // Обновить активный класс в навигации
             navLinks.forEach(link => {
                 link.classList.toggle('active', link.dataset.page === pageId);
             });
-            // Если открыт дашборд — обновить данные
             if (pageId === 'dashboard') {
                 fetchStatus();
-                startDashboardAutoRefresh();
+                startAutoRefresh();
             } else {
-                stopDashboardAutoRefresh();
+                stopAutoRefresh();
             }
         }
 
         // ---------- Автообновление дашборда ----------
-        let dashboardInterval = null;
-        function startDashboardAutoRefresh() {
-            if (dashboardInterval) clearInterval(dashboardInterval);
-            dashboardInterval = setInterval(fetchStatus, 3000);
-        }
-        function stopDashboardAutoRefresh() {
-            if (dashboardInterval) {
-                clearInterval(dashboardInterval);
-                dashboardInterval = null;
-            }
-        }
+        let refreshInterval = null;
+        function startAutoRefresh() { stopAutoRefresh(); refreshInterval = setInterval(fetchStatus, 3000); }
+        function stopAutoRefresh() { if (refreshInterval) clearInterval(refreshInterval); refreshInterval = null; }
 
-        // ---------- Работа с сохранёнными конфигами (localStorage) ----------
-        const STORAGE_KEY = 'nad_saved_configs_v2';
-        function loadSavedConfigs() {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            savedConfigs = raw ? JSON.parse(raw) : {};
-        }
-        function saveConfigToStorage(name, config) {
-            savedConfigs[name] = config;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(savedConfigs));
-            renderSavedConfigs();
-        }
-        function deleteConfigFromStorage(name) {
-            delete savedConfigs[name];
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(savedConfigs));
-            renderSavedConfigs();
-        }
-        function clearAllConfigs() {
-            savedConfigs = {};
-            localStorage.removeItem(STORAGE_KEY);
-            renderSavedConfigs();
-        }
-
-        // ---------- Рендер списка сохранённых конфигураций ----------
+        // ---------- Сохранённые конфигурации ----------
         function renderSavedConfigs() {
             const entries = Object.entries(savedConfigs);
             if (entries.length === 0) {
                 savedList.innerHTML = '';
-                noConfigsMsg.classList.remove('hidden');
+                noConfigs.style.display = 'block';
                 return;
             }
-            noConfigsMsg.classList.add('hidden');
-            savedList.innerHTML = entries.map(([name, config]) => `
+            noConfigs.style.display = 'none';
+            savedList.innerHTML = entries.map(([name, cfg]) => `
                 <li class="config-item">
                     <span style="font-weight: 500;">${escapeHTML(name)}</span>
                     <div style="display: flex; gap: 0.5rem;">
-                        <button class="small use-config" data-name="${escapeHTML(name)}">Использовать</button>
-                        <button class="small danger delete-config" data-name="${escapeHTML(name)}">Удалить</button>
+                        <button class="small" onclick="window.useConfig('${escapeHTML(name)}')">Использовать</button>
+                        <button class="small danger" onclick="window.deleteConfig('${escapeHTML(name)}')">Удалить</button>
                     </div>
                 </li>
             `).join('');
-
-            // Привязываем события
-            savedList.querySelectorAll('.use-config').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const name = e.currentTarget.dataset.name;
-                    const config = savedConfigs[name];
-                    if (config) {
-                        configInput.value = config;
-                        configName.value = name;
-                        showPage('home');
-                    }
-                });
-            });
-            savedList.querySelectorAll('.delete-config').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const name = e.currentTarget.dataset.name;
-                    deleteConfigFromStorage(name);
-                });
-            });
         }
-
-        // Экранирование HTML (для безопасности)
+        window.useConfig = function(name) {
+            configInput.value = savedConfigs[name];
+            configName.value = name;
+            showPage('home');
+        };
+        window.deleteConfig = function(name) {
+            delete savedConfigs[name];
+            localStorage.setItem('nad_configs', JSON.stringify(savedConfigs));
+            renderSavedConfigs();
+        };
+        function saveConfigToStorage(name, config) {
+            savedConfigs[name] = config;
+            localStorage.setItem('nad_configs', JSON.stringify(savedConfigs));
+            renderSavedConfigs();
+        }
+        function clearAllConfigs() {
+            savedConfigs = {};
+            localStorage.removeItem('nad_configs');
+            renderSavedConfigs();
+        }
         function escapeHTML(str) {
-            return str.replace(/[&<>"]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                if (m === '"') return '&quot;';
-                return m;
+            return String(str).replace(/[&<>"]/g, function(c) {
+                if (c === '&') return '&amp;';
+                if (c === '<') return '&lt;';
+                if (c === '>') return '&gt;';
+                if (c === '"') return '&quot;';
+                return c;
             });
         }
 
         // ---------- API-запросы ----------
         async function apiFetch(endpoint, options = {}) {
-            const url = `${API_BASE}${endpoint}`;
+            const url = API_BASE + endpoint;
             const res = await fetch(url, {
                 ...options,
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...options.headers
-                }
+                headers: { 'Content-Type': 'application/json', ...options.headers }
             });
-            if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return res.json();
         }
 
-        // ---------- Подключение к VPN ----------
-        async function handleConnect(config, name) {
-            showHomeMessage('⏳ Подключение...', 'info');
+        // ---------- Подключение ----------
+        connectBtn.addEventListener('click', async () => {
+            const config = configInput.value.trim();
+            const name = configName.value.trim() || `config-${Date.now()}`;
+            if (!config) return showAlert('❌ Конфигурация пуста', 'error');
+            showAlert('⏳ Подключение...', 'info');
             try {
-                const data = await apiFetch('/api/connect', {
-        
+                const data = await apiFetch('/api/connect', { method: 'POST', body: JSON.stringify({ config, name }) });
+                if (data.success) {
+                    showAlert('✅ VPN подключён', 'success');
+                    saveConfigToStorage(name, config);
+                } else {
+                    showAlert('❌ ' + (data.error || 'Ошибка'), 'error');
+                }
+            } catch (e) {
+                showAlert('❌ Сервер недоступен. Проверьте API_BASE и CORS.', 'error');
+            }
+        });
+
+        function showAlert(msg, type) {
+            homeAlert.textContent = msg;
+            homeAlert.className = `alert ${type === 'success' ? 'success' : ''}`;
+            homeAlert.classList.remove('hidden');
+            setTimeout(() => homeAlert.classList.add('hidden'), 5000);
+        }
+
+        // ---------- Статус и статистика ----------
+        async function fetchStatus() {
+            try {
+                const data = await apiFetch('/api/status');
+                if (data.connected) {
+                    vpnStatus.innerHTML = '✅ VPN активен';
+                    disconnectBtn.disabled = false;
+                    rxValue.textContent = formatBytes(data.transfer?.received || 0);
+                    txValue.textContent = formatBytes(data.transfer?.sent || 0);
+                    if (data.peers && data.peers.length) {
+                        peersList.innerHTML = data.peers.map(p => `
+                            <li class="peer-item">
+                                <span style="font-family: monospace; color: #2563eb;">${p.public_key?.slice(0,16) || '??'}…</span>
+                                <span style="display: block; font-size: 0.9rem;">📡 ${p.endpoint || '—'}</span>
+                                <span style="display: block; font-size: 0.8rem; color: #64748b;">⬇️ ${formatBytes(p.transfer?.rx || 0)} / ⬆️ ${formatBytes(p.transfer?.tx || 0)}</span>
+                            </li>
+                        `).join('');
+                    } else {
+                        peersList.innerHTML = '<li style="color: #64748b; text-align: center;">Нет активных пиров</li>';
+                    }
+                } else {
+                    vpnStatus.innerHTML = '❌ VPN отключён';
+                    disconnectBtn.disabled = true;
+                    rxValue.textContent = '0 B';
+                    txValue.textContent = '0 B';
+                    peersList.innerHTML = '<li style="color: #64748b; text-align: center;">Нет подключения</li>';
+                }
+            } catch {
+                vpnStatus.innerHTML = '❌ Ошибка соединения с API';
+                disconnectBtn.disabled = true;
+            }
+        }
+
+        // ---------- Отключение ----------
+        disconnectBtn.addEventListener('click', async () => {
+            await apiFetch('/api/disconnect', { method: 'POST' });
+            fetchStatus();
+        });
+
+        // ---------- Форматирование байтов ----------
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KiB', 'MiB', 'GiB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        // ---------- Тёмная тема ----------
+        themeToggle.addEventListener('click', toggleTheme);
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            applyTheme(currentTheme);
+        }
+        function applyTheme(theme) {
+            document.body.className = theme;
+            localStorage.setItem('theme', theme);
+            themeToggle.textContent = theme === 'dark' ? 'Выключить' : 'Включить';
+        }
+
+        // ---------- Очистка конфигураций ----------
+        clearConfigsBtn.addEventListener('click', () => {
+            if (confirm('Удалить все сохранённые конфигурации?')) {
+                clearAllConfigs();
+            }
+        });
+
+        // ---------- Обработчики навигации ----------
+        function setupEventListeners() {
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showPage(link.dataset.page);
+                });
+            });
+        }
+
+        // ---------- Запуск ----------
+        init();
+    </script>
+</body>
+</html>

@@ -1,13 +1,20 @@
 {
   "name": "NAD VPN Controller",
   "short_name": "NAD",
-  "description": "Управление WireGuard сервером",
-  "start_url": "/",
+  "description": "Управление WireGuard сервером с телефона",
+  "start_url": "/nad-vpn/",
+  "scope": "/nad-vpn/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0f172a",
   "theme_color": "#2563eb",
   "icons": [
+    {
+      "src": "icons/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "icons/icon-192.png",
       "sizes": "192x192",
